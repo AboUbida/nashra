@@ -1,0 +1,64 @@
+name: nashra
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'   # GitHub runs these late, sometimes not at all; see README for the cron-job.org fallback
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: Show what would be posted without posting
+        type: boolean
+        default: true
+
+permissions:
+  contents: write
+
+concurrency: nashra   # one run at a time, so state.json and history.jsonl never race
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install card support
+        # If this fails the posts still go out, with the source's photo or as text.
+        run: |
+          sudo apt-get install -y -qq libfribidi0 || echo "libfribidi not installed"
+          python -m pip install --quiet pillow || echo "Pillow not installed"
+      - name: Read the sources and post
+        run: python3 nashra.py
+        env:
+          TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+          TELEGRAM_CHANNEL: ${{ vars.TELEGRAM_CHANNEL }}
+          TELEGRAM_ADMIN: ${{ vars.TELEGRAM_ADMIN }}
+          REVIEW: ${{ vars.REVIEW }}
+          LLM_KEY: ${{ secrets.LLM_KEY }}
+          LLM_URL: ${{ vars.LLM_URL }}
+          LLM_MODEL: ${{ vars.LLM_MODEL }}
+          X_BEARER_TOKEN: ${{ secrets.X_BEARER_TOKEN }}
+          MAX_PER_RUN: ${{ vars.MAX_PER_RUN }}
+          MAX_PER_DAY: ${{ vars.MAX_PER_DAY }}
+          GAP_MINUTES: ${{ vars.GAP_MINUTES }}
+          CREDIT: ${{ vars.CREDIT }}
+          FOOTER: ${{ vars.FOOTER }}
+          OWN_CARDS: ${{ vars.OWN_CARDS }}
+          CARD_BRAND: ${{ vars.CARD_BRAND }}
+          DRY_RUN: ${{ inputs.dry_run && '1' || '' }}
+      - name: Keep the cards of this run for inspection
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: cards-${{ github.run_id }}
+          path: cards/
+          if-no-files-found: ignore
+          retention-days: 7
+      - name: Save state
+        if: always()
+        run: |
+          git add history.jsonl state.json 2>/dev/null || exit 0
+          git diff --cached --quiet && exit 0
+          git -c user.name=nashra -c user.email=nashra@users.noreply.github.com commit -m "Update state"
+          git pull --rebase --quiet && git push

@@ -1,0 +1,21 @@
+# Sources, one per line.
+#   Name | RSS or Atom URL | category      free; the name is shown in the source link
+#   @handle | category                      X account, read through the X API (pay-per-use;
+#                                           needs the X_BEARER_TOKEN secret)
+# The category colours the card and its label: tech or football. Lines starting with # are ignored.
+
+# Football
+الرياضية | https://arriyadiyah.com/rss | football
+الشرق الأوسط | https://aawsat.com/feed/sport | football
+CNN بالعربية | https://arabic.cnn.com/api/v1/rss/sport/rss.xml | football
+BBC Sport | https://feeds.bbci.co.uk/sport/football/rss.xml | football
+
+# Technology
+البوابة العربية للأخبار التقنية | https://aitnews.com/feed/ | tech
+عرب هاردوير | https://arabhardware.net/feed | tech
+عالم التقنية | https://www.tech-wd.com/wd/feed/ | tech
+The Verge | https://www.theverge.com/rss/index.xml | tech
+
+# X accounts (optional, about $0.005 per post read). Uncomment to enable:
+# @SPL | football
+# @saudiff | football
